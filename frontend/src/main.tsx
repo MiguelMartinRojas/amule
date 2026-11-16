@@ -1,17 +1,14 @@
-import { useEffect } from 'react'
-import { ApiClientProvider } from './lib/types'
-import { Dashboard } from './components/Dashboard'
-import './globals.css'
+// Main entry point for aMule Modern UI React frontend
+import { ApiClientProvider } from './lib/api-client';
+import { Dashboard } from './components/Dashboard';
+import './globals.css';
 
-function Root() {
-  // Wrap app with API client provider
+export default function App() {
   return (
-    <ApiClientProvider statusUrl="/api/status">
+    <ApiClientProvider>
       <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
         <Dashboard />
       </div>
     </ApiClientProvider>
-  )
+  );
 }
-
-export default Root

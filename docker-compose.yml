@@ -1,0 +1,39 @@
+# aMule Modernization - Docker Compose para desarrollo y producción
+version: '3.8'
+
+services:
+  # API Server moderno (Express + Socket.IO)
+  api-server:
+    build:
+      context: ./api-server
+      dockerfile: ../docker/api-server/Dockerfile
+    ports:
+      - "${API_SERVER_PORT:-3128}:3128"
+    environment:
+      - API_PORT=3128
+      - BACKEND_PATH=/var/run/amule/amuled.sock
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,*}
+    volumes:
+      # Mount backend socket si existe en host
+      - /var/run/amule:/var/run/amule:ro
+      # Log mounts para debug
+      - api-server-logs:/app/logs
+    depends_on:
+      - frontend
+  
+  # Frontend React build (serve static files)
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run build && npx serve dist"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://api-server:3128
+    depends_on:
+      - api-server
+
+volumes:
+  api-server-logs:
+

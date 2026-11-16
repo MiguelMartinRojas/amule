@@ -1,0 +1,192 @@
+# INICIO DE MIGRACIÓN A QT6/QML - PASO 1
+
+## Estado Actual
+- Framework: wxWidgets 3.2.0+ (MIN_WX_VERSION)
+- Archivos fuente: ~195 .cpp/.h
+- Referencias wxWidgets: ~315
+
+## Objetivo: Qt6 + QML Declarativo
+
+### CMakeLists.txt - Cambios Necesarios
+
+#### 1. Agregar Qt6 dependencies en la sección de cmake_modules:
+```cmake
+find_package(Qt6 REQUIRED 
+    COMPONENTS Core
+              Quick  
+              Widgets
+              Network
+              Gui)
+```
+
+#### 2. Reemplazar wxWidgets dependencies (phased):
+- Fase 1: Marcar como DEPRECATED
+- Fase 2: Eliminar gradualmente
+- Fase 3: Integración completa Qt6
+
+### Estructura de Directorios Nueva
+```
+src/
+├── apps/           # Aplicaciones Qt6
+│   ├── main.cpp        # QApplication + QQuickView
+│   └── qml/            # Archivos QML declarativos
+├── libs/            # Librerías compartidas (mantener)
+└── cmake/           # CMakeLists.txt configurado para Qt6
+
+# Nuevo layout simplificado:
+cmake/
+├── cmake_modules/   # find_package(Qt6 ...)
+├── qt6.cmake        # Configuración Qt6 específica
+└── wx.cmake         # DEPRECATED - mantener temporalmente
+```
+
+### Código de Ejemplo - main.cpp con Qt6/QML
+
+```cpp
+// apps/main.cpp - Reemplaza src/amule-gui.cpp antiguo
+#include <QApplication>
+#include <QQuickView>
+#include "qml/main.qml"
+#include <QDebug>
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+    
+    // Animaciones fluidas configuradas desde Qt6 native
+    qApp->setNativeEvent((fnptr*)nullptr);  // Para QML aceleración
+    
+    // Inicializar con transiciones CSS nativas
+    QQuickView view(argc, argv);
+    view.setSource(QUrl(QString("qrc:/qml/main.qml")));
+    
+    qDebug() << "Iniciando aMule Qt6 con fluid UI";
+    
+    return app.exec();
+}
+```
+
+### Animaciones Fluidas en QML
+
+```qml
+// qml/AnimationEngine.qml - Motor de animaciones fluido
+import QtQuick 2.15
+import QtQuick.Window 2.15
+import QtQuick.Controls 2.15
+
+QtPropertyModel {
+    // Configuración global para transiciones CSS fluidas
+    
+    property int "FadeIn": 300;           // Opacidad 0->1 en ms
+    property int "SlideUp": 200;          // Movimiento vertical suave
+    property int "ScaleSoft": 500;        // Escala sin discontinuidades
+    
+    // Ejemplo de QML con animaciones CSS nativas
+    Rectangle {
+        width: 400
+        height: 300
+        
+        PropertyAnimation {
+            target: parent
+            property: "opacity"
+            duration: FadeIn
+            from: 0.0
+            to: 1.0
+            easing.type: Easing.OutQuad  // Curva suave (no lineal)
+        }
+        
+        PointAnimation {
+            target: parent
+            property: "y"
+            duration: SlideUp
+            from: 100
+            to: 0
+            easing.type: Easing.OutBack  // Sin rebote
+        }
+    }
+}
+```
+
+### Estilos CSS Modernos en Qt6/QML
+
+```qml
+// qml/styles/ModernPalette.qml - Paleta de colores moderna
+import QtQuick
+import QtQuick.Window
+
+QtPropertyModel {
+    // Branding aMule moderno
+    property string "primary": "#1c95e0";     // Azul vibrante (#22b9e8)
+    property string "secondary": "#43b16d";   // Verde brillante (#57f392)
+    property string "accent": "#ffab00";       // Naranja (#ffb86c)
+    property string "background": "#f5f5f5";   // Gris claro moderno
+    property string "surface": "#ffffff";      // Blanco puro
+    
+    // Tipografía fluida con Poppins/Roboto
+    property string "fontHeadline": "Poppins, sans-serif";
+    property string "fontBody": "Roboto, sans-serif";
+}
+
+// Uso del paletizado en UI components
+Rectangle {
+    color: ModernPalette.primary;      // Azul moderno
+    width: 400
+    height: 300
+    
+    // Animaciones CSS con easing curves nativas
+    PropertyAnimation {
+        target: parent
+        property: "opacity"
+        duration: 300
+        from: 0.0
+        to: 1.0
+        easing.type: Easing.OutQuad  // Suave, no lineal
+    }
+    
+    PointAnimation {
+        target: parent
+        property: "y"
+        duration: 200
+        from: 50
+        to: 0
+        easing.type: Easing.OutBack  // Sin discontinuidades
+    }
+}
+```
+
+### Próximos Pasos - Fase 1
+
+1. ✅ **Análisis wxWidgets completo** (completado)
+2. ⏳ **CMakeLists.txt para Qt6**:
+   - Agregar find_package(Qt6 ...)
+   - Configurar multiconfiguration (Linux/Windows/macOS)
+3. ⏳ **main.cpp base QML**:
+   - Reemplazar wxApp con QApplication + QQuickView
+   - Inicializar animaciones fluidas desde Qt6 native
+
+### Siguientes Pasos en CMakeLists.txt
+
+```cmake
+# cmake/qt6.cmake - Configuración Qt6 para multiconfiguración
+# (reemplaza find_package(wxWidgets ...))
+
+find_package(Qt6 REQUIRED 
+    COMPONENTS Core
+              Quick  
+              Widgets
+              Network
+              Gui)
+
+set(CMAKE_AUTOMOC ON)      # Auto-MOC para Qt6
+set(CMAKE_AUTORCC ON)      # RCC para recursos QML
+```
+
+### Beneficios Clave vs wxWidgets
+
+| Métrica | wxWidgets (actual) | Qt6/QML (objetivo) |
+|---------|-------------------|--------------------|
+| Animaciones nativas | Limitadas a QSS básico | CSS completo + hardware accel. |
+| Rendering | OpenGL/OpenGL ES | QML declarativo nativo |
+| Framerate control | wxApp event loop | `qApp->setNativeEvent` directo |
+| Theming | Color hardcodeado | CSS variables + theming |
+
+¿Continuamos con la Fase 2 (animaciones fluidas)?

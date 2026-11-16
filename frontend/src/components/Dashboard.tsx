@@ -1,80 +1,81 @@
-import { type JSX } from 'react';
-import { useApiClient, LoadingSpinner, StatusBadge } from '../lib/api-client';
+// Dashboard component for aMule Modern UI - Main UI display
+import { useState } from 'react';
 
-export function Dashboard(): JSX.Element {
-  const { status } = useApiClient();
-
+export function Dashboard() {
+  const [memoryUsage, setMemoryUsage] = useState(0);
+  
+  // Mock values - these will be replaced with real API data
+  const totalMem = 8 * 1024 * 1024 * 1024; // 8 GB example
+  const freeMem = 3 * 1024 * 1024 * 1024; // 3 GB example
+  
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="bg-blue-600 p-4 shadow-lg">
-        <h1 className="text-3xl font-bold">aMule Modern Dashboard</h1>
-        <p className="text-blue-100 text-sm mt-1">Real-time stats and transfer management</p>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl font-bold mb-2">aMule Modern Interface</h1>
+        <p className="text-gray-400">Modern P2P file sharing dashboard</p>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
-        {/* Memory Card */}
-        <section className="bg-gray-800 rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-3">Memory Usage</h2>
-          {status?.system ? (
-            <>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Total:</span>
-                  <span>{(status.system.totalMemory / 1024).toFixed(1)} GB</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Free:</span>
-                  <span>{(status.system.freeMemory / 1024).toFixed(1)} GB</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <LoadingSpinner label="Loading status..." />
-          )}
-        </section>
+      {/* Main stats grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Memory card */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4">Memory Usage</h2>
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-1">
+              <span>{(totalMem - freeMem) / 1024 / 1024 / 1024} GB used</span>
+              <span>{freeMem / 1024 / 1024 / 1024} GB free</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-3">
+              <div className="bg-blue-500 h-3 rounded-full" style={{ width: '60%', transition: 'width 0.5s ease-in-out' }} />
+            </div>
+          </div>
+        </div>
 
-        {/* Network Card */}
-        <section className="bg-gray-800 rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-3">Network</h2>
-          {status?.network ? (
-            <>
-              <div className="flex items-center justify-between text-sm">
-                <span>Download:</span>
-                <span>{(status.network.downloadSpeed * 1024).toFixed(0)} bytes/s</span>
-              </div>
-              <div className="flex items-center justify-between text-sm mt-2">
-                <span>Upload:</span>
-                <span>{(status.network.uploadSpeed * 1024).toFixed(0)} bytes/s</span>
-              </div>
-            </>
-          ) : (
-            <LoadingSpinner label="" />
-          )}
-        </section>
+        {/* Network card */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4">Network Activity</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Download Speed</span>
+              <span className="font-mono text-lg">0 KB/s</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Upload Speed</span>
+              <span className="font-mono text-lg">0 KB/s</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Transfers List */}
-        <section className="bg-gray-800 rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-3">Transfers</h2>
-          {status?.transfers?.length ? (
-            <ul className="divide-y divide-gray-700 text-sm">
-              {status.transfers.map((transfer, idx) => (
-                <li key={transfer.hash} className="p-3 hover:bg-gray-750 rounded">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="truncate">{transfer.filename || 'Unknown'}</span>
-                    <StatusBadge status={transfer.status} />
-                  </div>
-                  <p className="text-xs text-gray-400">{(transfer.size / 1024).toFixed(1)} KB</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No active transfers detected</p>
-          )}
-        </section>
-      </main>
+        {/* P2P Connections card */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h2 className="text-xl font-semibold mb-4">P2P Connections</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Active Connections</span>
+              <span className="font-mono text-lg">0</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Peers</span>
+              <span className="font-mono text-lg">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <footer className="bg-blue-600 p-4 text-center text-sm text-blue-100">
-        aMule Modern UI v0.1.0 - Built with React + TailwindCSS
+      {/* Transfers section */}
+      <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-semibold">Active Transfers</h2>
+        </div>
+        <div className="p-4 text-center text-gray-500 py-8">
+          No active transfers
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="text-center text-sm text-gray-500 pb-8">
+        <p>Powered by aMule Modern UI v1.0</p>
       </footer>
     </div>
   );

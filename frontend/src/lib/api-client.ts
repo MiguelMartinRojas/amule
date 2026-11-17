@@ -92,30 +92,32 @@ export function useApiClient(): SystemStatus | null {
   return context.status;
 }
 
-// Legacy React.createElement based components for compatibility
+// Modern React components using createElement for compatibility
 export function LoadingSpinner(props: { size?: string }) {
   const sizes = { sm: 'w-4 h-4', md: 'w-8 h-8', lg: 'w-12 h-12' };
   const sizeClass = props.size ? (sizes as any)[props.size] : 'w-8 h-8';
-  
-  return React.createElement('div', { className: 'flex items-center justify-center' },
+
+  return React.createElement(
+    'div',
+    { className: `flex items-center justify-center ${sizeClass}` },
     React.createElement('div', {
-      className: sizeClass + ' border-4 border-blue-200 rounded-full animate-spin',
-    }),
+      className: 'border-4 border-blue-200 rounded-full animate-spin'
+    })
   );
 }
 
 export function StatusBadge(props: { status: string }) {
-  const colorMap: any = {
+  const colorMap = {
     queued: 'bg-yellow-100 text-yellow-800',
     downloading: 'bg-green-100 text-green-800',
     paused: 'bg-gray-100 text-gray-800',
     complete: 'bg-blue-100 text-blue-800',
   };
   const colorClass = colorMap[props.status] || 'bg-gray-200';
-  
+
   return React.createElement(
     'span',
-    { className: colorClass + ' px-2 py-1 rounded-full text-xs' },
-    props.status,
+    { className: `px-2 py-1 rounded-full text-xs ${colorClass}` },
+    props.status
   );
 }

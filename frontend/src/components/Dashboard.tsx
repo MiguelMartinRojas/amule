@@ -23,8 +23,8 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Memory Usage</h2>
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
-              <span>{(totalMem - freeMem) / 1024 / 1024 / 1024} GB used</span>
-              <span>{freeMem / 1024 / 1024 / 1024} GB free</span>
+              <span>{Math.round((totalMem - freeMem) / 1024 / 1024 / 1024)} GB used</span>
+              <span>{Math.round(freeMem / 1024 / 1024 / 1024)} GB free</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-3">
               <div className="bg-blue-500 h-3 rounded-full" style={{ width: '60%', transition: 'width 0.5s ease-in-out' }} />

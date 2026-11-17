@@ -1,14 +1,12 @@
-// Main entry point for aMule Modern UI React frontend
-import { ApiClientProvider } from './lib/api-client';
-import { Dashboard } from './components/Dashboard';
+import { createRoot } from 'react-dom/client';
+import App from './App';
 import './globals.css';
+import './index.css';
 
-export default function App() {
-  return (
-    <ApiClientProvider>
-      <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
-        <Dashboard />
-      </div>
-    </ApiClientProvider>
-  );
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+  throw new Error('Root element #root was not found');
 }
+
+createRoot(rootElement).render(<App />);

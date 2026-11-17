@@ -46,3 +46,4 @@ packaging/windows/installer_strings_generated.nsh
 .aider*
 
 /frontend/node_modules/
+/api-server/.env

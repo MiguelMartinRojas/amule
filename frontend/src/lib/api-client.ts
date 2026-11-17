@@ -7,7 +7,7 @@ export interface SystemStatus {
     totalMemory: number;
     freeMemory: number;
     usedMemory: number;
-    cpuLoad: string;
+    cpuLoad?: string;
   };
   network: {
     downloadSpeed: number;
@@ -38,13 +38,14 @@ export interface Friend {
 
 interface ApiClientContextType {
   status: SystemStatus | null;
+  error: string | null;
   setStatus: (status: SystemStatus) => void;
   transfers: TransferItem[];
   addTransfer: (transfer: TransferItem) => void;
   removeTransfer: (id: string) => void;
 }
 
-const ApiClientContext = createContext<ApiClientContextType | undefined>(undefined);
+export const ApiClientContext = createContext<ApiClientContextType | undefined>(undefined);
 
 interface ApiClientProviderProps {
   children: React.ReactNode;
@@ -52,21 +53,40 @@ interface ApiClientProviderProps {
 
 export function ApiClientProvider(props: ApiClientProviderProps) {
   const [status, setStatus] = useState<SystemStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
 
-  // Fetch status from API every 5 seconds
   useEffect(() => {
-    const interval = setInterval(async () => {
+    let active = true;
+
+    const fetchStatus = async () => {
       try {
         const response = await fetch('/api/status');
-        const data = await response.json();
-        setStatus(data);
-      } catch (error) {
-        console.error('Failed to fetch status:', error);
-      }
-    }, 5000);
+        if (!response.ok) {
+          throw new Error(`Status request failed (${response.status})`);
+        }
 
-    return () => clearInterval(interval);
+        const data = await response.json();
+        if (active) {
+          setStatus(data);
+          setError(null);
+        }
+      } catch (error) {
+        if (active) {
+          const message = error instanceof Error ? error.message : 'Unknown API error';
+          console.error('Failed to fetch status:', error);
+          setError(message);
+        }
+      }
+    };
+
+    void fetchStatus();
+    const interval = setInterval(() => void fetchStatus(), 5000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const addTransfer = (transfer: TransferItem) => {
@@ -79,7 +99,7 @@ export function ApiClientProvider(props: ApiClientProviderProps) {
 
   return React.createElement(
     ApiClientContext.Provider,
-    { value: { status, setStatus, transfers, addTransfer, removeTransfer } },
+    { value: { status, error, setStatus, transfers, addTransfer, removeTransfer } },
     props.children
   );
 }
@@ -90,6 +110,14 @@ export function useApiClient(): SystemStatus | null {
     throw new Error('useApiClient must be used within ApiClientProvider');
   }
   return context.status;
+}
+
+export function useApiError(): string | null {
+  const context = useContext(ApiClientContext);
+  if (!context) {
+    throw new Error('useApiError must be used within ApiClientProvider');
+  }
+  return context.error;
 }
 
 // Modern React components using createElement for compatibility
@@ -106,8 +134,8 @@ export function LoadingSpinner(props: { size?: string }) {
   );
 }
 
-export function StatusBadge(props: { status: string }) {
-  const colorMap = {
+export function StatusBadge(props: { status: TransferItem['status'] }) {
+  const colorMap: Record<TransferItem['status'], string> = {
     queued: 'bg-yellow-100 text-yellow-800',
     downloading: 'bg-green-100 text-green-800',
     paused: 'bg-gray-100 text-gray-800',

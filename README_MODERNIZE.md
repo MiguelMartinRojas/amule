@@ -12,16 +12,18 @@ Esta es la migración moderna para [amule](file:///mnt/otros/code/amule) usando 
 ### Opción A: Test local rápido (recomendado para empezar)
 
 ```bash
-# Inicializar API Server con backend placeholder
+# Inicializar API Server
 cd api-server
 npm install
-node src/backend-bridge.js
+# Solo la primera vez: crea .env desde .env.example y configura la contraseña EC
+test -f .env || cp .env.example .env
+node src/backend-bridge.mjs
 
 # En otro terminal, probar frontend en dev mode:
 cd ../frontend
 npm install
 npm run dev
-# Abre http://localhost:5173 en tu navegador
+# Abre http://localhost:3000 en tu navegador
 ```
 
 ### Opción B: Modo producción completo
@@ -31,7 +33,7 @@ npm run dev
 ./build.sh
 
 # Iniciar ambos servidores simultáneamente (API + static frontend)
-# El API server está en puerto 3128, frontend en su propio servidor
+# API_PORT controla el puerto del API (por defecto 12128)
 ```
 
 ## 🚀 Comandos Útiles
@@ -39,9 +41,9 @@ npm run dev
 ### Test rápido del API:
 ```bash
 cd api-server
-npm install && node src/backend-bridge.js
-# → http://localhost:3128/health para verificar
-# → http://localhost:3128/api/status para datos simulados
+npm install && node src/backend-bridge.mjs
+# → http://localhost:12128/health para verificar
+# → http://localhost:12128/api/status para estado del dashboard
 ```
 
 ### Frontend desarrollo:
@@ -49,7 +51,7 @@ npm install && node src/backend-bridge.js
 cd frontend
 npm install
 npm run dev
-# Abre http://localhost:5173 (Vite servidor)
+# Abre http://localhost:3000 (Vite servidor)
 ```
 
 ### Build para producción:
@@ -65,7 +67,8 @@ npm run build
 amule/
 ├── api-server/              # Node.js Express API Server
 │   ├── src/
-│   │   ├── backend-bridge.js  # Principal endpoint handler
+│   │   ├── backend-bridge.mjs # Principal endpoint handler
+│   │   └── amule-ec-client.mjs # Cliente de búsqueda EC
 │   │   └── index.js           # Original placeholder (puedes borrarlo)
 │   └── package.json          # Dependencies: express, socket.io
 │
@@ -109,7 +112,7 @@ Para conectar con tu build actual de amule:
    - ¿HTTP en puerto específico? (amuleweb ~9100)
    - ¿Pipe/Named socket?
 
-2. **Modificar `api-server/src/backend-bridge.js`:**
+2. **Modificar `api-server/src/backend-bridge.mjs`:**
    ```js
    // Ejemplo de conexión a backend HTTP existente
    import http from 'http';
@@ -125,6 +128,20 @@ Para conectar con tu build actual de amule:
    - Luego transfer list/details  
    - Finalmente search, friends, etc.
 
+La búsqueda del bridge usa External Connections directamente. Crea `api-server/.env`
+a partir de `.env.example`, configura la contraseña EC y reinicia el proceso API:
+
+```bash
+cd api-server
+test -f .env || cp .env.example .env
+# Edita .env y configura AMULE_EC_PASSWORD
+node src/backend-bridge.mjs
+```
+
+La contraseña se mantiene en el backend; no la envíes desde el navegador ni la
+guardes en el repositorio. La instancia de aMule debe tener External Connections
+habilitado y aceptar esa contraseña.
+
 ## 🎯 Roadmap Rápido
 
 ### Fase 1 (Esta semana - ya casi completa):
@@ -135,7 +152,9 @@ Para conectar con tu build actual de amule:
 - [ ] Implementar transfer list con datos reales
 
 ### Fase 2 (Esta semana/próxima):
-- [ ] Components para Search results, Friend management
+- [x] Interfaz de búsqueda con red, tipo, extensión, tamaño y fuentes mínimas
+- [x] Conectar búsqueda/resultados con aMule External Connections
+- [ ] Friend management
 - [ ] React Query para caching de API calls
 - [ ] WebSocket client con Socket.IO
 - [ ] PWA configuration + offline support

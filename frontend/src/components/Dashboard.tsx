@@ -1,13 +1,21 @@
-// Dashboard component for aMule Modern UI - Main UI display
-import { useState } from 'react';
+import { useApiClient, useApiError } from '../lib/api-client';
+
+const formatMemory = (megabytes: number) => `${(megabytes / 1024).toFixed(1)} GB`;
 
 export function Dashboard() {
-  const [memoryUsage, setMemoryUsage] = useState(0);
-  
-  // Mock values - these will be replaced with real API data
-  const totalMem = 8 * 1024 * 1024 * 1024; // 8 GB example
-  const freeMem = 3 * 1024 * 1024 * 1024; // 3 GB example
-  
+  const status = useApiClient();
+  const apiError = useApiError();
+  const totalMemory = status?.system.totalMemory;
+  const freeMemory = status?.system.freeMemory;
+  const usedMemory =
+    totalMemory !== undefined && freeMemory !== undefined
+      ? Math.max(0, totalMemory - freeMemory)
+      : undefined;
+  const memoryUsage =
+    totalMemory && usedMemory !== undefined
+      ? Math.min(100, (usedMemory / totalMemory) * 100)
+      : 0;
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -16,6 +24,16 @@ export function Dashboard() {
         <p className="text-gray-400">Modern P2P file sharing dashboard</p>
       </header>
 
+      {apiError ? (
+        <p role="alert" className="mb-6 rounded-lg border border-red-800 bg-red-950 p-4 text-red-200">
+          API unavailable: {apiError}
+        </p>
+      ) : !status ? (
+        <p role="status" className="mb-6 text-center text-gray-400">
+          Connecting to API…
+        </p>
+      ) : null}
+
       {/* Main stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Memory card */}
@@ -23,11 +41,14 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Memory Usage</h2>
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
-              <span>{Math.round((totalMem - freeMem) / 1024 / 1024 / 1024)} GB used</span>
-              <span>{Math.round(freeMem / 1024 / 1024 / 1024)} GB free</span>
+              <span>{usedMemory !== undefined ? `${formatMemory(usedMemory)} used` : '—'}</span>
+              <span>{freeMemory !== undefined ? `${formatMemory(freeMemory)} free` : '—'}</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-3">
-              <div className="bg-blue-500 h-3 rounded-full" style={{ width: '60%', transition: 'width 0.5s ease-in-out' }} />
+              <div
+                className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${memoryUsage}%` }}
+              />
             </div>
           </div>
         </div>
@@ -38,11 +59,15 @@ export function Dashboard() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Download Speed</span>
-              <span className="font-mono text-lg">0 KB/s</span>
+              <span className="font-mono text-lg">
+                {status ? `${status.network.downloadSpeed} KB/s` : '—'}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Upload Speed</span>
-              <span className="font-mono text-lg">0 KB/s</span>
+              <span className="font-mono text-lg">
+                {status ? `${status.network.uploadSpeed} KB/s` : '—'}
+              </span>
             </div>
           </div>
         </div>
@@ -53,11 +78,11 @@ export function Dashboard() {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Active Connections</span>
-              <span className="font-mono text-lg">0</span>
+              <span className="font-mono text-lg">{status?.p2p.connections ?? '—'}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Peers</span>
-              <span className="font-mono text-lg">0</span>
+              <span className="font-mono text-lg">{status?.p2p.peers ?? '—'}</span>
             </div>
           </div>
         </div>
@@ -69,7 +94,7 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold">Active Transfers</h2>
         </div>
         <div className="p-4 text-center text-gray-500 py-8">
-          No active transfers
+          Transfer list is not available from the API yet
         </div>
       </div>
 
